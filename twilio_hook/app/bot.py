@@ -40,12 +40,31 @@ def bot_i():
 def bot_ii():
     app.logger.info(request.values)
     incoming_msg = request.values.get('Body', '').lower()
+    incoming_MediaUrl0 = request.values.get('MediaUrl0', '')
+    rinfo = None
+    if incoming_MediaUrl0: 
+        url = incoming_MediaUrl0
+        r = requests.get(url, allow_redirects=True)
+        response = r
+        file = open("x.ogg", "wb")
+        file.write(response.content)
+        file.close()
+        watson_url = 'https://api.us-south.speech-to-text.watson.cloud.ibm.com/instances/e3339fb6-d487-4e92-877b-68a6e8e1edb6/v1/recognize?model=pt-BR_BroadbandModel'
+        headers = {'content-type': 'audio/ogg'}
+        with open('x.ogg', 'rb') as f:
+            audio = f.read()
+            ri = requests.post(watson_url, auth=('apikey', 'TXbraU4SuBCuAvcAIAoXUg0WdO96nTwmNnqAdZo4umfN'), headers=headers, data=audio)
+        app.logger.info(ri.json()['results'][0]['alternatives'][0]['transcript'])
+        rinfo = ri.json()['results'][0]['alternatives'][0]['transcript']
+    if rinfo:
+        incoming_msg = rinfo
     resp = MessagingResponse()
     msg = resp.message()
     var_i = {
         "sender": "Rasa",
         "message": incoming_msg
     }
+    app.logger.info(var_i)
     webhook = 'http://web1:5005/webhooks/rest/webhook'
     requests_post = requests.post(webhook, json=var_i)
     json = requests_post.json()
